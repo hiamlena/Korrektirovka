@@ -164,6 +164,7 @@ def _feature_from_manual_only(manual: FrameManual):
 # ---------- API: объединённый слой рамок ----------
 
 @app.route("/frames", methods=["GET"])
+@app.route("/api/frames", methods=["GET"])
 def get_frames():
     """
     GET /api/frames
@@ -222,6 +223,7 @@ def get_frames():
 # ---------- API: предложения от водителей ----------
 
 @app.route("/frames/<frame_id>/suggest", methods=["POST"])
+@app.route("/api/frames/<frame_id>/suggest", methods=["POST"])
 def suggest_for_existing_frame(frame_id: str):
     """
     POST /api/frames/<frame_id>/suggest
@@ -275,6 +277,7 @@ def suggest_for_existing_frame(frame_id: str):
 
 
 @app.route("/frames/suggest", methods=["POST"])
+@app.route("/api/frames/suggest", methods=["POST"])
 def suggest_new_frame():
     """
     POST /api/frames/suggest
@@ -348,6 +351,7 @@ def _suggestion_to_dict(s: FrameSuggestion) -> dict:
 
 
 @app.route("/frame_suggestions", methods=["GET"])
+@app.route("/api/frame_suggestions", methods=["GET"])
 def list_suggestions():
     """
     GET /api/frame_suggestions?status=new|approved|rejected
