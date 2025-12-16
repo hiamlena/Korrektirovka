@@ -44,6 +44,21 @@ async function loadGeoJSONOnce(url) {
 }
 
 /**
+ * Найти первый доступный GeoJSON из списка URL.
+ */
+async function loadFirstAvailableGeoJSON(urls) {
+  const candidates = Array.isArray(urls) ? urls : [urls];
+  for (const url of candidates) {
+    const data = await loadGeoJSONOnce(url);
+    if (data && data.type === 'FeatureCollection' && Array.isArray(data.features)) {
+      return { data, source: url };
+    }
+  }
+  console.warn('[TT][frames-service] Не удалось загрузить GeoJSON ни из одного источника:', candidates);
+  return { data: null, source: null };
+}
+
+/**
  * Нормализация пары координат (lon, lat).
  */
 function normalizeCoordPair(pair) {
@@ -146,9 +161,17 @@ export async function initFramesService(map, options = {}) {
     hgvConditionalUrl = null
   } = options || {};
 
+  // Поддерживаем несколько URL: сначала /api/frames, затем /frames, затем локальный fallback.
+  const framesCandidates = Array.isArray(framesUrl)
+    ? framesUrl
+    : [framesUrl, '/frames', './data/frames_ready.geojson'];
+
   try {
-    const framesData = await loadGeoJSONOnce(framesUrl);
-    state.framesData = framesData && framesData.features ? framesData : { type: 'FeatureCollection', features: [] };
+    const { data, source } = await loadFirstAvailableGeoJSON(framesCandidates);
+    state.framesData = data && data.features ? data : { type: 'FeatureCollection', features: [] };
+    if (source) {
+      console.log('[TT][frames-service] Сервис рамок инициализировал данные из:', source);
+    }
   } catch (e) {
     console.warn('[TT][frames-service] Ошибка при загрузке рамок:', e);
     state.framesData = { type: 'FeatureCollection', features: [] };
@@ -207,7 +230,7 @@ export async function initFramesService(map, options = {}) {
     };
   }
 
-  console.log('[TT][frames-service] Сервис рамок инициализирован, источник:', '/api/frames');
+  console.log('[TT][frames-service] Сервис рамок инициализирован, источник:', framesCandidates);
 
   return {
     state,
